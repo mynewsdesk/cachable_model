@@ -1,0 +1,44 @@
+# Logfile created on Wed Apr 14 10:54:59 +0200 2010 by logger.rb
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'panic'[0m
+  [4;35;1mSQL (0.1ms)[0m   [0mSET client_min_messages TO 'notice'[0m
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'ERROR'[0m
+  [4;35;1mSQL (38.6ms)[0m   [0mCREATE TABLE "articles" ("id" serial primary key, "name" character varying(255)) [0m
+  [4;36;1mSQL (1.3ms)[0m   [0;1mCREATE TABLE "schema_migrations" ("version" character varying(255) NOT NULL) [0m
+  [4;35;1mSQL (1.6ms)[0m   [0mCREATE UNIQUE INDEX "unique_schema_migrations" ON "schema_migrations" ("version")[0m
+  [4;36;1mSQL (0.4ms)[0m   [0;1mSELECT version FROM "schema_migrations"[0m
+  [4;35;1mSQL (0.7ms)[0m   [0mINSERT INTO "schema_migrations" (version) VALUES ('0')[0m
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'panic'[0m
+  [4;35;1mSQL (0.1ms)[0m   [0mSET client_min_messages TO 'notice'[0m
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'ERROR'[0m
+  [4;35;1mSQL (28.8ms)[0m   [0mDROP TABLE "articles"[0m
+  [4;36;1mSQL (5.0ms)[0m   [0;1mCREATE TABLE "articles" ("id" serial primary key, "name" character varying(255)) [0m
+  [4;35;1mSQL (0.7ms)[0m   [0mSELECT version FROM "schema_migrations"[0m
+  [4;36;1mSQL (0.0ms)[0m   [0;1mPGError: ERROR: relation "page_text_translations" does not exist
+LINE 4: WHERE a.attrelid = 'page_text_translations'::re...
+ ^
+: SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'page_text_translations'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'panic'[0m
+  [4;35;1mSQL (0.1ms)[0m   [0mSET client_min_messages TO 'notice'[0m
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'ERROR'[0m
+  [4;35;1mSQL (4.1ms)[0m   [0mDROP TABLE "articles"[0m
+  [4;36;1mSQL (5.0ms)[0m   [0;1mCREATE TABLE "articles" ("id" serial primary key, "name" character varying(255)) [0m
+  [4;35;1mSQL (0.3ms)[0m   [0mSELECT version FROM "schema_migrations"[0m
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'panic'[0m
+  [4;35;1mSQL (0.1ms)[0m   [0mSET client_min_messages TO 'notice'[0m
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'ERROR'[0m
+  [4;35;1mSQL (4.1ms)[0m   [0mDROP TABLE "articles"[0m
+  [4;36;1mSQL (4.4ms)[0m   [0;1mCREATE TABLE "articles" ("id" serial primary key, "name" character varying(255)) [0m
+  [4;35;1mSQL (0.3ms)[0m   [0mSELECT version FROM "schema_migrations"[0m
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'panic'[0m
+  [4;35;1mSQL (0.1ms)[0m   [0mSET client_min_messages TO 'notice'[0m
+  [4;36;1mSQL (0.1ms)[0m   [0;1mSET client_min_messages TO 'ERROR'[0m
+  [4;35;1mSQL (4.6ms)[0m   [0mDROP TABLE "articles"[0m
+  [4;36;1mSQL (6.7ms)[0m   [0;1mCREATE TABLE "articles" ("id" serial primary key, "name" character varying(255)) [0m
+  [4;35;1mSQL (0.3ms)[0m   [0mSELECT version FROM "schema_migrations"[0m
+  [4;36;1mCachableModelTest::Article Load (0.4ms)[0m   [0;1mSELECT * FROM "articles" [0m
