@@ -1,20 +1,17 @@
 require 'rubygems'
 require 'active_support'
 require 'active_support/test_case'
+require 'test/unit'
+require 'mocha'
 
 ENV['RAILS_ENV'] = 'test'
 ENV['RAILS_ROOT'] ||= File.dirname(__FILE__) + '/../../../..'
-require 'test/unit'
 
 require File.expand_path(File.join(ENV['RAILS_ROOT'], 'config/boot.rb'))
 
 module Rails
   class Initializer
     def initialize_database
-      # if configuration.frameworks.include?(:active_record)
-      #   ActiveRecord::Base.configurations = configuration.database_configuration
-      #   ActiveRecord::Base.establish_connection
-      # end
       config = YAML::load(IO.read(File.dirname(__FILE__) + '/database.yml'))
       ActiveRecord::Base.logger = Logger.new(File.dirname(__FILE__) + "/debug.log")
       db_adapter = ENV['DB']
@@ -43,8 +40,14 @@ module Rails
   end
 end
 
-#require File.expand_path(File.join(ENV['RAILS_ROOT'], 'config/environment.rb'))
-
 config = Rails::Configuration.new
-# config.database_configuration_file = File.join(File.dirname(__FILE__), "database.yml")
 Rails::Initializer.run(:process, config)
+
+class User < ActiveRecord::Base    
+  cachable_model
+  has_many :articles
+end 
+
+class Article < ActiveRecord::Base
+  belongs_to :user
+end 

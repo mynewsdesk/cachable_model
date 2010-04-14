@@ -16,11 +16,10 @@ module CachableModel
   end
 
   module BaseMethods
-    def cachable(options = {})
+    def cachable_model(options = {})
       after_save    { |record| CachableModel.expire(record.class, record.id) }
       after_destroy { |record| CachableModel.expire(record.class, record.id) }
       self.send :extend, ClassMethods
-      self.send :include, InstanceMethods
     end
   end
 
@@ -32,13 +31,6 @@ module CachableModel
         super(sql)
       end    
     end
-  end
-  
-  module InstanceMethods
-    def reload
-      CachableModel.expire(self.class, self.id)
-      super
-    end    
   end
 end
 
