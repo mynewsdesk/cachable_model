@@ -1,4 +1,5 @@
 require 'rubygems'
+require 'sqlite3'
 require 'active_support'
 require 'active_support/test_case'
 require 'test/unit'
@@ -14,21 +15,7 @@ module Rails
     def initialize_database
       config = YAML::load(IO.read(File.dirname(__FILE__) + '/database.yml'))
       ActiveRecord::Base.logger = Logger.new(File.dirname(__FILE__) + "/debug.log")
-      db_adapter = ENV['DB']
-
-      # no db passed, try one of these fine config-free DBs before bombing.
-      db_adapter ||=
-        begin
-          require 'rubygems'
-          require 'sqlite'
-          'sqlite'
-        rescue MissingSourceFile
-          begin
-            require 'sqlite3'
-            'sqlite3'
-          rescue MissingSourceFile
-        end
-      end
+      db_adapter = ENV['DB'] || "postgresql"
 
       if db_adapter.nil?
         raise "No DB Adapter selected. Pass the DB= option to pick one, or install Sqlite or Sqlite3."
@@ -41,6 +28,7 @@ module Rails
 end
 
 config = Rails::Configuration.new
+config.cache_store = ENV['CACHE_STORE'].try(:to_sym) || :mem_cache_store
 Rails::Initializer.run(:process, config)
 
 class User < ActiveRecord::Base    

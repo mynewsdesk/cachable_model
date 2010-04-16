@@ -1,8 +1,4 @@
 sqlite:
-  :adapter: sqlite
-  :database: vendor/plugins/cachable_model/test/cachable_model_plugin.sqlite.db
-
-sqlite3:
   :adapter: sqlite3
   :database: vendor/plugins/cachable_model/test/cachable_model_plugin.sqlite3.db
 

@@ -71,13 +71,15 @@ class CachableModelTest < ActiveSupport::TestCase
 
   test "when find_by_username returns nothing, nothing is cached" do
     assert_equal nil, User.find_by_username("foobar")
-    assert_cache_data_empty
+    assert_equal nil, User.find_by_username("foobar")
+    username_key = User.model_cache.id_lookup_key("username", "foobar")
+    assert_equal nil, Rails.cache.read(username_key)
   end
 
   test "find_by_name is not cached" do
-    User.find_by_name("Peter")
-    User.find_by_name("David")
-    assert_cache_data_empty
+    user = User.find_by_name("David")
+    ActiveRecord::Base.connection.execute("update users set username = 'foobar' where id = #{user.id}")
+    assert_equal "foobar", User.find_by_name("David").username
   end
 
   test "belongs_to association is cached" do
@@ -88,6 +90,17 @@ class CachableModelTest < ActiveSupport::TestCase
     assert_equal @user, article.reload.user
     Rails.cache.write(@user_key, ["foobar"])
     assert_equal "foobar", article.reload.user
+  end
+
+  test "object fetched from the cache can be modified (is not frozen)" do
+    User.find(@user.id) # initialize the cache
+    user = User.find(@user.id) # fetch from the cache
+    user.name = "Michael"
+    user.email = "michael@example.com"
+    user.save!
+    user = User.find(@user.id)
+    assert_equal "Michael", user.name
+    assert !user.frozen?
   end
 
   test "cache is flushed on update" do
@@ -115,11 +128,8 @@ class CachableModelTest < ActiveSupport::TestCase
     assert_equal @article, Article.find_by_id(@article.id)
   end
   
+  # Useful for memory store but not memcache store
   def cache_data
-    Rails.cache.instance_eval { @data.inspect }
-  end
-  
-  def assert_cache_data_empty
-    assert_equal "{}", cache_data    
+   Rails.cache.instance_eval { @data.inspect }
   end
 end

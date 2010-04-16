@@ -16,7 +16,8 @@ class CacheTest < ActiveSupport::TestCase
     assert_equal expect, @cache.parse_sql('select * from "users" where ("users"."id" = 123) LIMIT 1')
     assert_equal expect, @cache.parse_sql('select * from "users" where ("users"."id" = 123)')
     assert_equal expect, @cache.parse_sql('SELECT * FROM users where (users.id = 123)')
-    'SELECT * FROM "users" WHERE (id = 1)  LIMIT 1'
+    assert_equal expect, @cache.parse_sql('SELECT * FROM `users` WHERE (`users`.`id` = 123)') # mysql quoting
+    assert_equal expect, @cache.parse_sql('SELECT * FROM "users" WHERE (users.id = 123)  LIMIT 1')
   end
   
   test "parse_sql returns nil for SQL that is not an ID lookup" do
@@ -24,9 +25,11 @@ class CacheTest < ActiveSupport::TestCase
   end
   
   test "parse_sql can parse lookups by other columns than ID" do
+    @cache.stubs(:postgresql?).returns(true) # to activate postgresql quoting
     @cache.options[:find_by] = [:username]
     expect = {:column => "username", :value => "joe"}
     assert_equal expect, @cache.parse_sql(%q{select * from "users" where ("users"."username" = 'joe') LIMIT 1})
+    assert_equal expect, @cache.parse_sql(%q{SELECT * FROM "users" WHERE ("users"."username" = E'joe')  LIMIT 1}) # postgresql quoting
     assert_equal nil, @cache.parse_sql(%q{select * from "users" where ("users"."name" = 'Joe') LIMIT 1})
   end
 end

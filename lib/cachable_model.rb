@@ -66,12 +66,24 @@ module CachableModel
     end
 
     def parse_sql(sql)
-      column_pattern = (options[:find_by] + [:id]).join("|")
-      normalized_sql = sql.gsub(/["']/, '')
-      pattern = %r{^\s*SELECT \* FROM #{klass.table_name} WHERE \(#{klass.table_name}\.(#{column_pattern}) = (\S+?)\)}i
-      match, column, value = *normalized_sql.match(pattern)
-      #puts "pm debug normalized_sql='#{normalized_sql}' parse_sql pattern=#{pattern} column=#{column} value=#{value}"
+      match, column, value = *unquoted_sql(sql).match(sql_pattern)
       match ? {:column => column, :value => value} : nil
+    end
+    
+    def unquoted_sql(sql)
+      unquoted = sql.dup
+      unquoted.gsub!(/E'/, '') if postgresql?
+      unquoted.gsub!(/["'`]/, '')
+      unquoted
+    end
+    
+    def postgresql?
+      defined?(ActiveRecord::ConnectionAdapters::PostgreSQLAdapter) && klass.connection.class == ActiveRecord::ConnectionAdapters::PostgreSQLAdapter
+    end
+    
+    def sql_pattern
+      column_pattern = (options[:find_by] + [:id]).join("|")
+      %r{^\s*SELECT \* FROM #{klass.table_name} WHERE \(#{klass.table_name}\.(#{column_pattern}) = (\S+?)\)}i
     end
   end
 
