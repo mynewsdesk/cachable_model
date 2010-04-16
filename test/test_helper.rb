@@ -44,7 +44,7 @@ config = Rails::Configuration.new
 Rails::Initializer.run(:process, config)
 
 class User < ActiveRecord::Base    
-  cachable_model
+  cachable_model :find_by => [:username, :email]
   has_many :articles
 end 
 

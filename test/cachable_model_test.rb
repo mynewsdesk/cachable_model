@@ -2,12 +2,15 @@ require File.dirname(__FILE__) + '/test_helper.rb'
 
 class CachableModelTest < ActiveSupport::TestCase
   def setup
-    @user = User.create!(:name => "DHH")
+    User.destroy_all
+    Article.destroy_all
+    @user = User.create!(:name => "David", :username => "dhh", :email => "david@example.com")
+    @other_user = User.create!(:name => "Peter", :username => "flygarn", :email => "peter@example.com")
     @article = @user.articles.create!(:name => "Rails 3.0 Released!")
-    @user_key = CachableModel.key(User, @user.id)
-    @article_key = CachableModel.key(Article, @article.id)
-    Rails.cache.delete(@user_key)
-    Rails.cache.delete(@article_key)
+    @user_key = User.model_cache.key(@user.id)
+    @article_key = CachableModel::Cache.new(Article).key(@article.id)
+    Rails.cache.clear
+    CachableModel::Cache.any_instance.stubs(:enabled?).returns(true)    
   end
   
   test "find(ID) is cached" do
@@ -16,9 +19,23 @@ class CachableModelTest < ActiveSupport::TestCase
     assert_equal [@user], Rails.cache.read(@user_key)
     assert_equal @user, User.find(@user.id)
     ActiveRecord::Base.connection.execute("update users set name = 'foobar' where id = #{@user.id}")
-    assert_equal "DHH", User.find(@user.id).name # We still hit the cache and not the database
+    assert_equal "David", User.find(@user.id).name # We still hit the cache and not the database
     Rails.cache.write(@user_key, ["foobar"])
     assert_equal "foobar", User.find(@user.id)    
+  end
+
+  test 'find(:first) is cached' do
+    assert_equal nil, Rails.cache.read(@user_key)
+    assert_equal @user, User.find(:first, :conditions => {:id => @user.id})
+    assert_equal [@user], Rails.cache.read(@user_key)
+    Rails.cache.write(@user_key, ["foobar"])
+    assert_equal "foobar", User.find(:first, :conditions => {:id => @user.id})
+  end
+  
+  test "find(ID) is not cached when CachableModel::Cache#enabled? returns false" do
+    CachableModel::Cache.any_instance.stubs(:enabled?).returns(false)
+    assert_equal @user, User.find(@user.id)
+    assert_equal nil, Rails.cache.read(@user_key)    
   end
   
   test "find_by_id is cached" do
@@ -27,7 +44,42 @@ class CachableModelTest < ActiveSupport::TestCase
     assert_equal [@user], Rails.cache.read(@user_key)
     assert_equal @user, User.find_by_id(@user.id)    
   end
-  
+
+  test "find_by_username is cached and is flushed on update" do
+    assert_equal @user, User.find_by_username("dhh")
+    assert_equal nil, Rails.cache.read(@user_key)
+    username_key = User.model_cache.id_lookup_key("username", "dhh")
+    assert_equal @user.id, Rails.cache.read(username_key)
+    dep_key = User.model_cache.dep_key(User.model_cache.key(@user.id))
+    assert_equal [username_key], Rails.cache.read(dep_key)
+    
+    assert_equal @user, User.find_by_username("dhh")
+    assert_equal [@user], Rails.cache.read(@user_key)
+    ActiveRecord::Base.connection.execute("update users set name = 'foobar' where id = #{@user.id}")
+    assert_equal "David", User.find_by_username("dhh").name
+
+    assert_equal "foobar", User.find_by_email("david@example.com").name
+    email_key = User.model_cache.id_lookup_key("email", "david@example.com")
+    assert_equal @user.id, Rails.cache.read(email_key)
+    assert_equal [username_key, email_key].sort, Rails.cache.read(dep_key).sort
+
+    assert_equal "David", User.find_by_email("david@example.com").name
+    
+    @user.update_attributes!(:name => "David Heinemeier")
+    assert_equal "David Heinemeier", User.find_by_email("david@example.com").name    
+  end
+
+  test "when find_by_username returns nothing, nothing is cached" do
+    assert_equal nil, User.find_by_username("foobar")
+    assert_cache_data_empty
+  end
+
+  test "find_by_name is not cached" do
+    User.find_by_name("Peter")
+    User.find_by_name("David")
+    assert_cache_data_empty
+  end
+
   test "belongs_to association is cached" do
     assert_equal nil, Rails.cache.read(@user_key)
     article = Article.find(@article.id)
@@ -37,7 +89,7 @@ class CachableModelTest < ActiveSupport::TestCase
     Rails.cache.write(@user_key, ["foobar"])
     assert_equal "foobar", article.reload.user
   end
-  
+
   test "cache is flushed on update" do
     assert_equal nil, Rails.cache.read(@user_key)
     assert_equal @user, User.find(@user.id)
@@ -61,5 +113,13 @@ class CachableModelTest < ActiveSupport::TestCase
     assert_equal @article, Article.find_by_id(@article.id)
     assert_equal nil, Rails.cache.read(@article_key)
     assert_equal @article, Article.find_by_id(@article.id)
+  end
+  
+  def cache_data
+    Rails.cache.instance_eval { @data.inspect }
+  end
+  
+  def assert_cache_data_empty
+    assert_equal "{}", cache_data    
   end
 end

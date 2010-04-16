@@ -3,13 +3,24 @@ Cachable Model
 
 This plugin caches single record primary key based database lookups for ActiveRecord models.
 It is similar to the CachedModel plugin but uses the Rails.cache object available in newer
-versions of Rails (2.1 or later).
+versions of Rails (2.1 or later). The plugin also makes it possible to cache lookups by other
+columns than the primary key.
+
+Limitations
+=======
+
+Due to difficulties in SQL parsing the :find_by option only works for columns with data without
+spaces. The option is intended for unique non-numeric columns such as usernames, emails etc.
 
 Example
 =======
 
 class Article < ActiveRecord::Base
-	cachable_model
+	cachable_model # This will cache id lookups only
+end
+
+class Article < ActiveRecord::Base
+	cachable_model :find_by => [:email, :username] # This will cache id lookups and lookups by columns email and username
 end
 
 Copyright (c) 2010 Peter Marklund, released under the MIT license
