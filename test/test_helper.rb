@@ -28,7 +28,7 @@ module Rails
 end
 
 config = Rails::Configuration.new
-config.cache_store = ENV['CACHE_STORE'].try(:to_sym) || :mem_cache_store
+config.cache_store = ENV['CACHE'].try(:to_sym) || :mem_cache_store
 Rails::Initializer.run(:process, config)
 
 class User < ActiveRecord::Base    

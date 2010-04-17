@@ -47,10 +47,10 @@ class CachableModelTest < ActiveSupport::TestCase
 
   test "find_by_username is cached and is flushed on update" do
     assert_equal @user, User.find_by_username("dhh")
-    assert_equal nil, Rails.cache.read(@user_key)
-    username_key = User.model_cache.id_lookup_key("username", "dhh")
+    assert_equal [@user], Rails.cache.read(@user_key)
+    username_key = CachableModel::IDLookup.new("username", "dhh", User.model_cache).key
     assert_equal @user.id, Rails.cache.read(username_key)
-    dep_key = User.model_cache.dep_key(User.model_cache.key(@user.id))
+    dep_key = CachableModel::Dependency.new(User.model_cache, @user_key, username_key).cache_key
     assert_equal [username_key], Rails.cache.read(dep_key)
     
     assert_equal @user, User.find_by_username("dhh")
@@ -59,12 +59,10 @@ class CachableModelTest < ActiveSupport::TestCase
     assert_equal "David", User.find_by_username("dhh").name
 
     assert_equal "foobar", User.find_by_email("david@example.com").name
-    email_key = User.model_cache.id_lookup_key("email", "david@example.com")
+    email_key = CachableModel::IDLookup.new("email", "david@example.com", User.model_cache).key
     assert_equal @user.id, Rails.cache.read(email_key)
     assert_equal [username_key, email_key].sort, Rails.cache.read(dep_key).sort
 
-    assert_equal "David", User.find_by_email("david@example.com").name
-    
     @user.update_attributes!(:name => "David Heinemeier")
     assert_equal "David Heinemeier", User.find_by_email("david@example.com").name    
   end
@@ -72,7 +70,7 @@ class CachableModelTest < ActiveSupport::TestCase
   test "when find_by_username returns nothing, nothing is cached" do
     assert_equal nil, User.find_by_username("foobar")
     assert_equal nil, User.find_by_username("foobar")
-    username_key = User.model_cache.id_lookup_key("username", "foobar")
+    username_key = CachableModel::IDLookup.new("username", "foobar", User.model_cache).key
     assert_equal nil, Rails.cache.read(username_key)
   end
 
@@ -118,7 +116,7 @@ class CachableModelTest < ActiveSupport::TestCase
     assert_equal [@user], Rails.cache.read(@user_key)
     @user.destroy
     assert_equal nil, User.find_by_id(@user.id)
-    assert_equal [], Rails.cache.read(@user_key)
+    assert Rails.cache.read(@user_key).blank?
   end
   
   test "model without cachable is not cached" do
