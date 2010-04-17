@@ -31,10 +31,6 @@ module CachableModel
       "CachableModel[#{klass.name}].#{method}(#{args.join(',')})".gsub(/\s/, "-")[0, 220]
     end
 
-    def key(id)
-      safe_key("find_by_id", id)
-    end
-    
     private
 
     def data

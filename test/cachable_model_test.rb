@@ -7,8 +7,8 @@ class CachableModelTest < ActiveSupport::TestCase
     @user = User.create!(:name => "David", :username => "dhh", :email => "david@example.com")
     @other_user = User.create!(:name => "Peter", :username => "flygarn", :email => "peter@example.com")
     @article = @user.articles.create!(:name => "Rails 3.0 Released!")
-    @user_key = User.model_cache.key(@user.id)
-    @article_key = CachableModel::Cache.new(Article).key(@article.id)
+    @user_key = User.model_cache.object(@user.id).key
+    @article_key = CachableModel::Cache.new(Article).object(@article.id).key
     Rails.cache.clear
     CachableModel::Cache.any_instance.stubs(:enabled?).returns(true)    
   end
